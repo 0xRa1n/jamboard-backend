@@ -4,6 +4,17 @@ const { config } = require("./config");
 const VALID_DB_IDENTIFIER_RE = /^[a-zA-Z0-9_]+$/;
 
 const getBasePoolConfig = () => {
+  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+
+  if (connectionString) {
+    const base = { connectionString };
+    // Enable SSL if it's a remote URL (not localhost)
+    if (!connectionString.includes('localhost') && !connectionString.includes('127.0.0.1')) {
+      base.ssl = { rejectUnauthorized: false };
+    }
+    return base;
+  }
+
   const base = {
     host: config.db.host,
     port: config.db.port,
