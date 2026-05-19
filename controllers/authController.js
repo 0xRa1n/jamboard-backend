@@ -9,7 +9,7 @@ const {
   authThemeUpdateSchema,
   authNotificationsUpdateSchema,
   authPasswordUpdateSchema,
-} = require("../../shared/schemas");
+} = require("../shared/schemas");
 
 function createAuthController({
   query,

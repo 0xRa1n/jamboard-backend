@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-backend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit all dependencies
+        run: npm audit --audit-level=high
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+  test:
+    name: Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: jamboard_test
+        options: >-
+          --health-cmd "pg_isready -U postgres -d jamboard_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      NODE_ENV: test
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DATABASE: jamboard_test
+      JWT_SECRET: test-secret-key-for-ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify PostgreSQL connectivity
+        run: |
+          node <<'NODE'
+          const { Client } = require('pg');
+
+          async function waitForDatabase(maxAttempts = 20, delayMs = 3000) {
+            for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+              const client = new Client({
+                host: process.env.POSTGRES_HOST,
+                port: Number(process.env.POSTGRES_PORT),
+                user: process.env.POSTGRES_USERNAME,
+                password: process.env.POSTGRES_PASSWORD,
+                database: process.env.POSTGRES_DATABASE,
+              });
+
+              try {
+                await client.connect();
+                await client.query('SELECT 1');
+                await client.end();
+                console.log('PostgreSQL connectivity check passed.');
+                return;
+              } catch (error) {
+                await client.end().catch(() => {});
+                if (attempt === maxAttempts) {
+                  throw error;
+                }
+                console.log(`PostgreSQL not ready (attempt ${attempt}/${maxAttempts}), retrying...`);
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+              }
+            }
+          }
+
+          waitForDatabase().catch((error) => {
+            console.error('PostgreSQL connectivity check failed.');
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Run tests
+        run: npm test

@@ -11,7 +11,7 @@ const {
   boardSharePermissionSchema,
   boardInviteSchema,
   boardAccessRequestSchema,
-} = require("../../shared/schemas");
+} = require("../shared/schemas");
 
 function createBoardsController({ query, onShareRevoked, jwtSecret, emailConfig }) {
   const boardsService = createBoardsService({ query });
@@ -367,8 +367,8 @@ function createBoardsController({ query, onShareRevoked, jwtSecret, emailConfig 
       const requesterName = requesterResult.rows[0]?.username || "A user";
 
       const baseUrl = `${req.protocol}://${req.get("host")}`;
-      const approveLink = `${baseUrl}/api/notifications/requests/${result.requestToken}/approve`;
-      const denyLink = `${baseUrl}/api/notifications/requests/${result.requestToken}/deny`;
+      const approveLink = `${baseUrl}/api/v1/notifications/requests/${result.requestToken}/approve`;
+      const denyLink = `${baseUrl}/api/v1/notifications/requests/${result.requestToken}/deny`;
 
       await emailService.sendAccessRequestEmail({
         to: ownerEmail,

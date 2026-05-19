@@ -73,7 +73,7 @@ function createBoardsRouter({ query, jwtSecret, onShareRevoked, emailConfig }) {
 
       const path = require("path");
       const fs = require("fs/promises");
-      const boardImagesDir = path.join(__dirname, "..", "..", "uploads", "board_images");
+      const boardImagesDir = path.join(__dirname, "..", "uploads", "board_images");
       await fs.mkdir(boardImagesDir, { recursive: true });
 
       const absoluteFilePath = path.join(boardImagesDir, filename);

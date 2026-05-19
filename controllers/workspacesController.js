@@ -1,7 +1,7 @@
 const { createWorkspacesService } = require("../services/workspacesService");
 const { ServiceError } = require("../services/serviceError");
 const { toNumericId } = require("../services/sessionService");
-const { workspaceCreateSchema, workspaceRenameSchema } = require("../../shared/schemas");
+const { workspaceCreateSchema, workspaceRenameSchema } = require("../shared/schemas");
 
 function createWorkspacesController({ query }) {
   const workspacesService = createWorkspacesService({ query });

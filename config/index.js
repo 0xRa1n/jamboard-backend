@@ -12,9 +12,9 @@ const isTestRuntime =
   process.env.NODE_ENV === "test" ||
   process.env.npm_lifecycle_event === "test" ||
   typeof process.env.NODE_TEST_CONTEXT === "string";
-const primaryDatabase = process.env.POSTGRES_DATABASE;
+const primaryDatabase = process.env.POSTGRES_DATABASE || process.env.POSTGRESQL_DATABASE;
 const isolatedTestDatabase =
-  process.env.POSTGRES_TEST_DATABASE || (primaryDatabase ? `${primaryDatabase}_test` : undefined);
+  process.env.POSTGRES_TEST_DATABASE || process.env.POSTGRESQL_TEST_DATABASE || (primaryDatabase ? `${primaryDatabase}_test` : undefined);
 
 const config = {
   port: Number(process.env.PORT || 3000),
@@ -24,13 +24,13 @@ const config = {
   isDevelopment,
   isTestRuntime,
   db: {
-    host: process.env.POSTGRES_HOST,
-    port: Number(process.env.POSTGRES_PORT || 5432),
-    user: process.env.POSTGRES_USERNAME,
-    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.POSTGRES_HOST || process.env.POSTGRESQL_HOST,
+    port: Number(process.env.POSTGRES_PORT || process.env.POSTGRESQL_PORT || 5432),
+    user: process.env.POSTGRES_USERNAME || process.env.POSTGRESQL_USERNAME,
+    password: process.env.POSTGRES_PASSWORD || process.env.POSTGRESQL_PASSWORD,
     database: isDevelopment && isTestRuntime ? isolatedTestDatabase : primaryDatabase,
     primaryDatabase,
-    adminDatabase: process.env.POSTGRES_ADMIN_DATABASE || "postgres",
+    adminDatabase: process.env.POSTGRES_ADMIN_DATABASE || process.env.POSTGRESQL_ADMIN_DATABASE || "postgres",
   },
 };
 

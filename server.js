@@ -1,6 +1,7 @@
 const express = require("express");
 const http = require("http");
 const path = require("path");
+const cors = require("cors");
 const WebSocket = require("ws");
 const { config, assertJwtSecret } = require("./config");
 const createAuthRouter = require("./routes/auth.routes");
@@ -18,11 +19,15 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ noServer: true });
 const sessionSockets = new Map();
 
-const distPath = path.join(__dirname, "..", "dist");
-const uploadsRootDir = path.join(__dirname, "..", "uploads");
+const uploadsRootDir = path.join(__dirname, "uploads");
 const avatarUploadDir = path.join(uploadsRootDir, "avatars");
+
+const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+app.use(cors({
+  origin: frontendUrl,
+  credentials: true,
+}));
 app.use(express.json());
-app.use(express.static(distPath));
 app.use(
   "/uploads",
   express.static(uploadsRootDir, {
@@ -32,7 +37,7 @@ app.use(
   }),
 );
 app.use(
-  "/api/auth",
+  "/api/v1/auth",
   createAuthRouter({
     query,
     jwtSecret: config.jwtSecret,
@@ -45,7 +50,7 @@ app.use(
     },
   }),
 );
-app.use("/api/workspaces", createWorkspacesRouter({ query, jwtSecret: config.jwtSecret }));
+app.use("/api/v1/workspaces", createWorkspacesRouter({ query, jwtSecret: config.jwtSecret }));
 
 function handleShareRevoked(boardId) {
   const session = boardSessions.get(boardId);
@@ -125,7 +130,7 @@ function handleOtherSessionsRevoked(sessionIds) {
 }
 
 app.use(
-  "/api/boards",
+  "/api/v1/boards",
   createBoardsRouter({
     query,
     jwtSecret: config.jwtSecret,
@@ -138,7 +143,7 @@ app.use(
 );
 
 app.use(
-  "/api/notifications",
+  "/api/v1/notifications",
   createNotificationsRouter({
     query,
     jwtSecret: config.jwtSecret,
@@ -636,11 +641,7 @@ wss.on("connection", async (ws, req) => {
   });
 });
 
-// --- SPA fallback ---
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
 
 app.use(errorHandler);
 
