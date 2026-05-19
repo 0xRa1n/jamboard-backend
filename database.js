@@ -176,10 +176,12 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS boards (
       id BIGSERIAL PRIMARY KEY,
       user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      workspace_id BIGINT REFERENCES workspaces(id) ON DELETE CASCADE,
       title VARCHAR(128) NOT NULL,
       content JSONB NOT NULL DEFAULT '[]'::jsonb,
       theme VARCHAR(16) NOT NULL DEFAULT 'light',
       share_permission VARCHAR(8) NOT NULL DEFAULT 'view',
+      share_token VARCHAR(64) UNIQUE,
       thumbnail TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -379,6 +381,34 @@ async function initializeDatabase() {
         WHERE table_name = 'users' AND column_name = 'notification_ask_permission'
       ) THEN
         ALTER TABLE users ADD COLUMN notification_ask_permission BOOLEAN NOT NULL DEFAULT FALSE;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'created_at'
+      ) THEN
+        ALTER TABLE users ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'updated_at'
+      ) THEN
+        ALTER TABLE users ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'boards' AND column_name = 'created_at'
+      ) THEN
+        ALTER TABLE boards ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'boards' AND column_name = 'updated_at'
+      ) THEN
+        ALTER TABLE boards ADD COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
       END IF;
     END
     $$
