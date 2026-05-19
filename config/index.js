@@ -26,7 +26,7 @@ const config = {
   db: {
     host: process.env.POSTGRES_HOST || process.env.POSTGRESQL_HOST,
     port: Number(process.env.POSTGRES_PORT || process.env.POSTGRESQL_PORT || 5432),
-    user: process.env.POSTGRES_USERNAME || process.env.POSTGRESQL_USERNAME,
+    user: process.env.POSTGRES_USER || process.env.POSTGRES_USERNAME || process.env.POSTGRESQL_USERNAME,
     password: process.env.POSTGRES_PASSWORD || process.env.POSTGRESQL_PASSWORD,
     database: isDevelopment && isTestRuntime ? isolatedTestDatabase : primaryDatabase,
     primaryDatabase,

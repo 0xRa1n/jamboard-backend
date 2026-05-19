@@ -2,6 +2,20 @@ const { Pool } = require("pg");
 const { config } = require("./config");
 
 const VALID_DB_IDENTIFIER_RE = /^[a-zA-Z0-9_]+$/;
+
+const getBasePoolConfig = () => {
+  const base = {
+    host: config.db.host,
+    port: config.db.port,
+    user: config.db.user,
+    password: config.db.password,
+  };
+  // Enable SSL for remote Vercel Postgres / Neon connections
+  if (config.db.host && config.db.host !== 'localhost' && config.db.host !== '127.0.0.1') {
+    base.ssl = { rejectUnauthorized: false };
+  }
+  return base;
+};
 let hasEnsuredIsolatedTestDatabase = false;
 let hasEnsuredDatabaseExists = false;
 
@@ -25,10 +39,7 @@ async function ensureIsolatedTestDatabase() {
   }
 
   const adminPool = new Pool({
-    host: config.db.host,
-    port: config.db.port,
-    user: config.db.user,
-    password: config.db.password,
+    ...getBasePoolConfig(),
     database: config.db.adminDatabase,
     max: 2,
     idleTimeoutMillis: 5000,
@@ -90,10 +101,7 @@ async function ensureDatabaseExists() {
   }
 
   const adminPool = new Pool({
-    host: config.db.host,
-    port: config.db.port,
-    user: config.db.user,
-    password: config.db.password,
+    ...getBasePoolConfig(),
     database: config.db.adminDatabase,
     max: 2,
     idleTimeoutMillis: 5000,
@@ -115,10 +123,7 @@ async function ensureDatabaseExists() {
 }
 
 const pool = new Pool({
-  host: config.db.host,
-  port: config.db.port,
-  user: config.db.user,
-  password: config.db.password,
+  ...getBasePoolConfig(),
   database: config.db.database,
   max: 20,
   idleTimeoutMillis: 30000,

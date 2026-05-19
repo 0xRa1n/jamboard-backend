@@ -5,11 +5,11 @@ const createAuthRouter = require("../routes/auth.routes");
 const { initializeDatabase, query, closeDatabase } = require("../database");
 
 const requiredDbEnvKeys = [
-  "POSTGRESQL_HOST",
-  "POSTGRESQL_PORT",
-  "POSTGRESQL_USERNAME",
-  "POSTGRESQL_PASSWORD",
-  "POSTGRESQL_DATABASE",
+  "POSTGRES_HOST",
+  "POSTGRES_PORT",
+  "POSTGRES_USER",
+  "POSTGRES_PASSWORD",
+  "POSTGRES_DATABASE",
 ];
 
 const canRunIntegrationTests = requiredDbEnvKeys.every((key) => Boolean(process.env[key]));
