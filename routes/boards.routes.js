@@ -32,7 +32,21 @@ function createBoardsRouter({ query, jwtSecret, onShareRevoked, emailConfig }) {
         hash,
       ]);
       if (result.rows.length > 0) {
-        return res.json({ exists: true, url: result.rows[0].file_path });
+        const publicFilePath = result.rows[0].file_path;
+        const path = require("path");
+        const fs = require("fs");
+        
+        // Construct the absolute path. publicFilePath is like "/uploads/board_images/filename.jpg"
+        const relativePath = publicFilePath.replace(/^\//, '');
+        const absoluteFilePath = path.join(__dirname, "..", relativePath);
+        
+        if (fs.existsSync(absoluteFilePath)) {
+          return res.json({ exists: true, url: publicFilePath });
+        } else {
+          // File missing from disk (ephemeral storage reset). Clean up the DB so it can be re-uploaded.
+          await query("DELETE FROM uploaded_images WHERE hash = $1", [hash]);
+          return res.json({ exists: false });
+        }
       }
       return res.json({ exists: false });
     } catch (err) {
